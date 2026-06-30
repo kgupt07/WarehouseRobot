@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ROS Robot Project Plan — Find, Report, Return</title>
+  <style>
+    @page { margin: 2cm; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11pt;
+      line-height: 1.45;
+      color: #1a1a1a;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { font-size: 22pt; border-bottom: 2px solid #333; padding-bottom: 8px; margin-top: 0; }
+    h2 { font-size: 16pt; margin-top: 28px; color: #222; page-break-after: avoid; }
+    h3 { font-size: 13pt; margin-top: 20px; color: #333; page-break-after: avoid; }
+    h4 { font-size: 11.5pt; margin-top: 16px; }
+    p { margin: 8px 0; }
+    ul, ol { margin: 8px 0 12px 20px; }
+    li { margin: 4px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 10pt; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #f0f0f0; }
+    code, pre {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f5f5f5;
+    }
+    pre {
+      padding: 10px;
+      border: 1px solid #ddd;
+      white-space: pre-wrap;
+      page-break-inside: avoid;
+    }
+    .meta { color: #555; font-size: 10pt; margin-bottom: 24px; }
+    .term { font-weight: bold; }
+    .box {
+      border: 1px solid #bbb;
+      padding: 12px 16px;
+      margin: 12px 0;
+      background: #fafafa;
+      page-break-inside: avoid;
+    }
+    hr { border: none; border-top: 1px solid #ccc; margin: 24px 0; }
+    .toc a { color: #0645ad; text-decoration: none; }
+    .page-break { page-break-before: always; }
+  </style>
+</head>
+<body>
+
+<h1>ROS 2 Indoor Robot Project Plan</h1>
+<p class="meta"><strong>Mission:</strong> Find Target, Report, Return Home &nbsp;|&nbsp;
+<strong>Platform:</strong> TurtleBot 3 · ROS 2 Humble · Gazebo · WSL 2 (Ubuntu 22.04) &nbsp;|&nbsp;
+<strong>Duration:</strong> ~4 weeks + Week 0 (~90–100 hours)</p>
+
+<div class="box">
+  <strong>Primary learning goal:</strong> Understand ROS 2 and the mobile robotics software stack — how sensors, maps, localization, navigation, perception, and mission logic connect.<br><br>
+  <strong>Main mission goal:</strong> A robot that localizes in a known environment, navigates to a given target area, finds a target with its camera, reports success, and returns home.
+</div>
+
+<h2>Table of Contents</h2>
+<ol class="toc">
+  <li><a href="#summary">Project Summary &amp; Scope</a></li>
+  <li><a href="#draft">Project Description (Draft with Measurable Levels)</a></li>
+  <li><a href="#reflection">Reflection Answers &amp; Adjustments</a></li>
+  <li><a href="#architecture">System Architecture</a></li>
+  <li><a href="#mission">Mission Flow</a></li>
+  <li><a href="#gates">Go / No-Go Gates</a></li>
+  <li><a href="#week0">Week 0 — Environment Proof</a></li>
+  <li><a href="#week1">Week 1 — ROS 2 Foundations + Simulation</a></li>
+  <li><a href="#week2">Week 2 — Space, TF, and Maps</a></li>
+  <li><a href="#week3">Week 3 — Autonomous Navigation</a></li>
+  <li><a href="#week4">Week 4 — Perception, Report, Full Mission</a></li>
+  <li><a href="#complete">Definition of Complete</a></li>
+  <li><a href="#risks">Risks &amp; Mitigations</a></li>
+  <li><a href="#resources">Resources</a></li>
+  <li><a href="#journal">Daily Journal Template</a></li>
+</ol>
+
+<hr>
+
+<h2 id="summary">1. Project Summary &amp; Scope</h2>
+
+<h3>One-sentence version</h3>
+<p>In simulation, build a small wheeled robot that knows where it is in a map, drives to chosen spots on its own, spots a target with a camera, reports success, and drives back home.</p>
+
+<h3>What the robot does (end state)</h3>
+<ol>
+  <li><strong>Localizes</strong> — knows where it is on a 2D map (AMCL).</li>
+  <li><strong>Navigates</strong> — drives to a pose you give it (Nav2).</li>
+  <li><strong>Perceives</strong> — camera finds a target (ArUco marker recommended).</li>
+  <li><strong>Reports</strong> — publishes a message (e.g. <code>target_found</code>).</li>
+  <li><strong>Returns home</strong> — Nav2 drives back to the home pose.</li>
+</ol>
+
+<h3>Mission story</h3>
+<p><em>“Go to the search area, find the package (marker), report success, return to base.”</em></p>
+
+<h3>In scope</h3>
+<ul>
+  <li>Localization on a 2D occupancy grid map</li>
+  <li>Autonomous navigation via Nav2</li>
+  <li>Camera-based target detection (start with ArUco)</li>
+  <li>Mission state machine (Python node you write)</li>
+  <li>Map: pre-made first; building map yourself (SLAM) as milestone or stretch</li>
+</ul>
+
+<h3>Out of scope (month 1)</h3>
+<ul>
+  <li>Robot arm / tapping or touching the target (stock TurtleBot 3 has no manipulator)</li>
+  <li>Training a large deep-learning model from scratch</li>
+  <li>Multi-robot coordination</li>
+  <li>Custom robot URDF from scratch in week 1</li>
+</ul>
+
+<h3>Time budget</h3>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Total hours</td><td>~90–100</td></tr>
+  <tr><td>Daily focus</td><td>~3–3.5 hours</td></tr>
+  <tr><td>Duration</td><td>~4 weeks + Week 0</td></tr>
+</table>
+<p><strong>Priority rule:</strong> If time runs short, protect navigation + return home before fancy perception.</p>
+
+<hr>
+
+<h2 id="draft">2. Project Description — Measurable Learning Levels</h2>
+
+<p>Learning is the underlying goal, but these checkpoints make progress tangible.</p>
+
+<h3>Level 1 — “I can run and observe the stack” (Week 1)</h3>
+<p><strong>Done when:</strong></p>
+<ul>
+  <li>Robot spawns in simulation</li>
+  <li>You can drive it with the keyboard (teleop)</li>
+  <li>You can see wheel odometry (<code>/odom</code>), laser scan (<code>/scan</code>), and velocity commands (<code>/cmd_vel</code>)</li>
+  <li>You can draw which <strong>nodes</strong> talk to which <strong>topics</strong></li>
+</ul>
+<p><strong>You can explain:</strong> What is a node? What is a topic? What does the robot publish vs. what you send to move it?</p>
+
+<h3>Level 2 — “I understand space and mapping” (Week 2)</h3>
+<p><strong>Done when:</strong></p>
+<ul>
+  <li>You can explain the <strong>TF tree</strong> (coordinate frames: map, odom, base_link, sensor frames)</li>
+  <li>You have a map file loaded in RViz (built via SLAM or pre-made)</li>
+  <li>Laser scan aligns with walls on the map</li>
+</ul>
+<p><strong>Terms:</strong> <span class="term">TF</span> = system tracking where each part of the robot is relative to the world. <span class="term">SLAM</span> = building a map while estimating where you are.</p>
+<p><strong>You can explain:</strong> Mapping vs. localization? Why more than one coordinate frame?</p>
+
+<h3>Level 3 — “I can navigate on purpose” (Week 3)</h3>
+<p><strong>Done when:</strong></p>
+<ul>
+  <li>Robot localizes on saved map (AMCL)</li>
+  <li>You send a goal pose; Nav2 drives there without keyboard</li>
+  <li>Robot completes 3 goals in a row (A → B → C) with at most minor recovery events</li>
+</ul>
+<p><strong>Terms:</strong> <span class="term">AMCL</span> = localization that matches laser scans to the map. <span class="term">Nav2</span> = standard ROS 2 navigation (planner + obstacle avoidance + controller).</p>
+<p><strong>You can explain:</strong> What Nav2 does vs. what your mission code does?</p>
+
+<h3>Level 4 — “Perception hooks into mission logic” (Week 4)</h3>
+<p><strong>Done when:</strong></p>
+<ul>
+  <li>Camera detects target (ArUco or colored object)</li>
+  <li>Mission node runs: HOME → GO_TO_SEARCH → DETECT → REPORT → GO_HOME → DONE</li>
+  <li>On detection, robot publishes <code>target_found</code> and returns home via Nav2</li>
+</ul>
+<p><strong>Stretch:</strong> Navigate closer to target before returning. No tapping on stock TurtleBot 3.</p>
+
+<h3>Weekly measurable artifacts</h3>
+<table>
+  <tr><th>Week</th><th>Tangible artifact</th><th>Knowledge check</th></tr>
+  <tr><td>1</td><td>Topic list / teleop working</td><td>Explain pub/sub and 3 key topics</td></tr>
+  <tr><td>2</td><td>Saved or loaded map file</td><td>Draw TF chain map→odom→base_link</td></tr>
+  <tr><td>3</td><td>Nav2 reaches 3 poses</td><td>Explain costmap vs planner vs controller</td></tr>
+  <tr><td>4</td><td>Mission log: detect + return</td><td>Explain mission vs navigation split</td></tr>
+</table>
+
+<hr>
+
+<h2 id="reflection">3. Reflection Answers &amp; Plan Adjustments</h2>
+
+<h3>Your stated priorities</h3>
+<ul>
+  <li><strong>Learning over demo polish</strong> — correct for month 1; use checkpoints above to avoid endless tutorial hopping.</li>
+  <li><strong>Mapping / localization / navigation understanding</strong> — your mental model is sound; refinements below.</li>
+  <li><strong>Mission:</strong> Find target and report (not tap). Signal/message is the right interaction for TurtleBot 3.</li>
+  <li><strong>Environment:</strong> Windows 11 + WSL 2 + Ubuntu 22.04 (fresh install). Week 0 validates RViz/Gazebo before core content.</li>
+</ul>
+
+<h3>Mapping vs localization vs navigation (refined)</h3>
+<table>
+  <tr><th>Layer</th><th>What it does</th></tr>
+  <tr><td><strong>Mapping</strong></td><td>Build a representation of the environment (usually 2D occupancy grid from lidar). Often done once, then map is saved and reused.</td></tr>
+  <tr><td><strong>Localization</strong></td><td>Estimate where the robot is on that map (pose: x, y, yaw). AMCL compares live lidar to the map. Separate from mapping — you can localize on a map you did not build.</td></tr>
+  <tr><td><strong>Navigation</strong></td><td>Given a goal pose and current pose, compute a collision-free path and drive there. Nav2 handles this. Navigation does not decide <em>which</em> goal — mission logic does.</td></tr>
+  <tr><td><strong>Mission logic</strong></td><td>Your code: “Go to search area, look for target, report, go home.”</td></tr>
+</table>
+
+<h3>Why “tap the target” is out of scope</h3>
+<p>Standard TurtleBot 3 (Burger/Waffle) has differential drive, lidar, optional camera — <strong>no arm or gripper</strong>. Tapping requires a manipulator (different project). Alternatives: publish <code>target_found</code> topic; optionally navigate closer to detected pose.</p>
+
+<h3>WSL 2 / RViz note</h3>
+<p>Windows 11 WSLg should show Linux GUI apps without extra X server. Week 0 proves <code>rviz2</code> and simulation before SLAM/Nav2. If graphics stay painful, consider dual-boot Ubuntu.</p>
+
+<hr>
+
+<h2 id="architecture">4. System Architecture</h2>
+
+<pre>
+┌─────────────────────────────────────────────┐
+│  Mission node (YOU write this)              │
+│  IDLE → GO_TO_SEARCH → DETECT → REPORT →    │
+│         GO_HOME → DONE                        │
+└──────────────┬──────────────────────────────┘
+               │ goals + reads status
+┌──────────────▼──────────────────────────────┐
+│  Nav2 (navigation)                          │
+│  Plans path, avoids obstacles, drives       │
+└──────────────┬──────────────────────────────┘
+               │ needs pose
+┌──────────────▼──────────────────────────────┐
+│  AMCL (localization)                        │
+│  "Where am I on the map?"                   │
+└──────────────┬──────────────────────────────┘
+               │ uses
+┌──────────────▼──────────────────────────────┐
+│  Map (2D occupancy grid)                    │
+│  Pre-made OR built with SLAM                │
+└──────────────┬──────────────────────────────┘
+               │ simulated sensors
+┌──────────────▼──────────────────────────────┐
+│  Gazebo + TurtleBot 3 + lidar + camera    │
+└──────────────┬──────────────────────────────┘
+               │
+┌──────────────▼──────────────────────────────┐
+│  ROS 2 (nodes, topics, actions, TF)       │
+└─────────────────────────────────────────────┘
+</pre>
+
+<h3>Key terms</h3>
+<ul>
+  <li><strong>Node</strong> — one running program in ROS (navigation, camera, your mission code).</li>
+  <li><strong>Topic</strong> — named message stream (e.g. <code>/scan</code>, <code>/camera/image_raw</code>).</li>
+  <li><strong>Action</strong> — long-running task with feedback; Nav2 uses <code>NavigateToPose</code>.</li>
+  <li><strong>TF</strong> — transforms between coordinate frames (map, odom, base_link, camera).</li>
+  <li><strong>URDF</strong> — robot description file (sizes, wheel placement, sensors).</li>
+  <li><strong>Pose</strong> — position + heading: x, y, yaw.</li>
+</ul>
+
+<hr>
+
+<h2 id="mission">5. Mission Flow</h2>
+
+<pre>
+[START at HOME]
+     │
+     ▼
+[GO_TO_SEARCH]  ──Nav2──►  drive to search pose (given)
+     │
+     ▼
+[DETECT]        ──camera──►  look for target (ArUco)
+     │
+     ▼
+[REPORT]        ──topic──►   publish target_found + details
+     │
+     ▼
+[GO_HOME]       ──Nav2──►  drive back to home pose
+     │
+     ▼
+[DONE]
+</pre>
+
+<h3>Mission node state spec (Week 4)</h3>
+<table>
+  <tr><th>State</th><th>Action</th></tr>
+  <tr><td>IDLE</td><td>Wait for start (service, topic, or timer)</td></tr>
+  <tr><td>GO_TO_SEARCH</td><td>Call Nav2 to search pose; on success → DETECT</td></tr>
+  <tr><td>DETECT</td><td>Wait N seconds; if detection → REPORT; else retry or fail gracefully</td></tr>
+  <tr><td>REPORT</td><td>Publish report message → GO_HOME</td></tr>
+  <tr><td>GO_HOME</td><td>Nav2 to home pose → DONE</td></tr>
+  <tr><td>DONE</td><td>Publish mission complete</td></tr>
+</table>
+
+<p>Record <strong>home pose</strong> and <strong>search pose</strong> in <code>docs/poses.md</code> once the map works.</p>
+
+<hr>
+
+<h2 id="gates">6. Go / No-Go Gates</h2>
+<table>
+  <tr><th>Gate</th><th>Pass before</th></tr>
+  <tr><td>G0</td><td>Week 0: ROS talker/listener + RViz opens</td></tr>
+  <tr><td>G1</td><td>Week 1: teleop + see <code>/scan</code> and <code>/odom</code></td></tr>
+  <tr><td>G2</td><td>Week 2: understand TF; map file loaded in RViz</td></tr>
+  <tr><td>G3</td><td>Week 3: Nav2 reaches one goal reliably</td></tr>
+  <tr><td>G4</td><td>Week 4: full mission once (detect + report + return)</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2 id="week0">7. Week 0 — Environment Proof (~8–12 hours)</h2>
+
+<h3>Objective</h3>
+<p>Prove WSL 2 + Ubuntu 22.04 + ROS 2 Humble + GUI works before robotics content.</p>
+
+<h3>Deliverables</h3>
+<ul>
+  <li><code>xeyes</code> or similar GUI works (WSLg)</li>
+  <li>ROS 2 Humble installed; talker + listener communicate</li>
+  <li><code>rviz2</code> opens</li>
+  <li>TurtleBot 3 simulation launches; laser visible in RViz</li>
+  <li>Keyboard teleop moves the robot</li>
+</ul>
+
+<h3>Day-by-day</h3>
+<table>
+  <tr><th>Day</th><th>Tasks</th><th>Hours</th></tr>
+  <tr><td>0</td><td>WSL update; <code>lsb_release -a</code>; GUI test (<code>xeyes</code>)</td><td>1–2</td></tr>
+  <tr><td>1</td><td>Install ROS 2 Humble; talker/listener</td><td>2–3</td></tr>
+  <tr><td>2</td><td>Install RViz; TurtleBot 3 + sim packages</td><td>2–3</td></tr>
+  <tr><td>3</td><td>Launch empty world + teleop; fix display/sim issues</td><td>2–4</td></tr>
+</table>
+
+<h3>Smoke-test phases</h3>
+<p><strong>Phase A — WSL basics:</strong> Ubuntu terminal; <code>sudo apt update && sudo apt upgrade</code>; confirm 22.04.</p>
+<p><strong>Phase B — GUI:</strong> <code>sudo apt install x11-apps -y</code>; run <code>xeyes</code>. Window should appear on Win 11.</p>
+<p><strong>Phase C — ROS 2:</strong> Install Humble; <code>source /opt/ros/humble/setup.bash</code>; run talker + listener in two terminals.</p>
+<p><strong>Phase D — RViz:</strong> <code>ros-humble-rviz2</code>; run <code>rviz2</code>.</p>
+<p><strong>Phase E — Simulation:</strong> Launch TurtleBot 3 world; RViz LaserScan on <code>/scan</code>; teleop moves robot.</p>
+
+<h3>Week 0 decision</h3>
+<table>
+  <tr><th>Result</th><th>Next step</th></tr>
+  <tr><td>All pass</td><td>Start Week 1</td></tr>
+  <tr><td>GUI OK, sim flaky</td><td>Debug sim only; don’t install Nav2 yet</td></tr>
+  <tr><td>RViz/Gazebo unusable</td><td>Consider dual-boot Ubuntu before Week 3</td></tr>
+</table>
+
+<h3>Common mistakes</h3>
+<ul>
+  <li>Forgetting <code>source /opt/ros/humble/setup.bash</code> in each new terminal</li>
+  <li>Mixing ROS 1 and ROS 2 tutorials</li>
+  <li>Debugging Nav2 when the real problem is WSL graphics</li>
+</ul>
+
+<hr>
+
+<h2 id="week1">8. Week 1 — ROS 2 Foundations + Simulation (~20–24 hours)</h2>
+
+<h3>Objective</h3>
+<p>Operate the simulated robot manually and read the data flow.</p>
+
+<h3>Concepts</h3>
+<p>Nodes, topics, pub/sub, launch files, parameters, <code>/cmd_vel</code>, <code>/scan</code>, <code>/odom</code>, basic URDF.</p>
+
+<h3>Deliverables</h3>
+<ul>
+  <li>G1: Teleop works</li>
+  <li>List nodes and topics while sim runs</li>
+  <li>Diagram: teleop → cmd_vel → robot → scan/odom</li>
+  <li>Optional: create empty Python ROS 2 package in workspace</li>
+</ul>
+
+<h3>Tasks</h3>
+<ol>
+  <li>Run TurtleBot 3 sim + teleop</li>
+  <li><code>ros2 topic list</code>, <code>ros2 topic echo /scan --once</code>, <code>ros2 node info</code></li>
+  <li>Read one launch file — what gets started?</li>
+  <li>RViz: LaserScan, Odometry</li>
+  <li>Create <code>mission_robot</code> package shell in <code>src/</code></li>
+</ol>
+
+<h3>Suggested repo structure</h3>
+<pre>
+ros_robot/
+├── docs/
+│   ├── system_graph.md
+│   └── poses.md
+├── src/
+│   └── mission_robot/
+│       ├── package.xml
+│       ├── setup.py
+│       └── mission_robot/
+└── README.md
+</pre>
+
+<h3>Reflection</h3>
+<ul>
+  <li>Who publishes <code>/cmd_vel</code> when you are not teleoperating?</li>
+  <li>What is the difference between odometry and a map?</li>
+</ul>
+
+<hr>
+
+<h2 id="week2">9. Week 2 — Space, TF, and Maps (~22–26 hours)</h2>
+
+<h3>Objective</h3>
+<p>Understand where the robot is in space; load or build a map.</p>
+
+<h3>Concepts</h3>
+<p>TF/tf2, frames (map, odom, base_link, base_scan, camera), SLAM Toolbox, map save/load, AMCL preview.</p>
+
+<h3>Deliverables</h3>
+<ul>
+  <li>G2: Map file (<code>.yaml</code> + <code>.pgm</code>) — SLAM or pre-made</li>
+  <li>TF diagram: map → odom → base_link → sensors</li>
+  <li>RViz: map + laser aligned</li>
+  <li>Write-up: mapping vs localization in your words</li>
+</ul>
+
+<h3>Two paths</h3>
+<p><strong>Path A (faster):</strong> Use default TurtleBot 3 navigation demo map; focus on TF + RViz. Defer self-built map to stretch.</p>
+<p><strong>Path B (full):</strong> Teleop + SLAM; save map with map_saver; reload in new session.</p>
+
+<h3>Tasks</h3>
+<ol>
+  <li><code>ros2 run tf2_tools view_frames</code></li>
+  <li>RViz: Fixed Frame = map; add Map, LaserScan, TF</li>
+  <li>SLAM + teleop OR load existing map</li>
+  <li>Launch AMCL; 2D Pose Estimate in RViz</li>
+</ol>
+
+<h3>Common mistakes</h3>
+<ul>
+  <li>Wrong fixed frame in RViz</li>
+  <li>Saving map before exploring full space</li>
+  <li>Confusing odom drift with map localization error</li>
+</ul>
+
+<hr>
+
+<h2 id="week3">10. Week 3 — Autonomous Navigation (~24–28 hours)</h2>
+
+<h3>Objective</h3>
+<p>Robot drives to given poses without keyboard — backbone of the mission.</p>
+
+<h3>Concepts</h3>
+<p>Nav2, global/local costmaps, planners, controllers, recovery behaviors, NavigateToPose action.</p>
+
+<h3>Deliverables</h3>
+<ul>
+  <li>G3: Single Nav2 goal in RViz succeeds</li>
+  <li>Three poses in sequence (A → B → C)</li>
+  <li>Home + search poses in <code>docs/poses.md</code></li>
+  <li>Python script: NavigateToPose to home and search area</li>
+  <li>Chain: search pose → wait → home (no camera yet)</li>
+</ul>
+
+<h3>Tasks</h3>
+<ol>
+  <li>Launch TurtleBot 3 navigation bringup (map + AMCL + Nav2)</li>
+  <li>Set initial pose; send goal; watch plans in RViz</li>
+  <li>Skim Nav2 params (robot radius, max speed)</li>
+  <li>Practice recovery behaviors</li>
+  <li>Python NavigateToPose node</li>
+  <li>Go to search → go home without perception</li>
+</ol>
+
+<p><strong>Risk:</strong> Highest-risk week. Budget 2 extra sessions for Nav2 debugging.</p>
+
+<h3>Reflection</h3>
+<ul>
+  <li>Global planner vs local controller?</li>
+  <li>Should your mission node publish <code>/cmd_vel</code>? Why or why not?</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2 id="week4">11. Week 4 — Perception, Report, Full Mission (~20–24 hours)</h2>
+
+<h3>Objective</h3>
+<p>Find target → report → return home under mission control.</p>
+
+<h3>Concepts</h3>
+<p>Image topics, ArUco detection, custom/std messages, finite state machine, Nav2 + perception integration.</p>
+
+<h3>Deliverables</h3>
+<ul>
+  <li>G4: Full state machine runs end-to-end</li>
+  <li>Publish <code>/mission/target_found</code> (or similar) on detection</li>
+  <li>Return home after report</li>
+  <li>Complete <code>docs/system_graph.md</code></li>
+  <li>Explain stack top-to-bottom (~5 min out loud)</li>
+</ul>
+
+<h3>Perception order (easiest first)</h3>
+<ol>
+  <li>ArUco marker in Gazebo (recommended)</li>
+  <li>Colored blob (OpenCV)</li>
+  <li>Small ML detector (stretch only)</li>
+</ol>
+
+<h3>Tasks</h3>
+<ol>
+  <li>View <code>/camera/image_raw</code> (rqt_image_view or RViz)</li>
+  <li>Detection node: image in → <code>target_detected</code> out</li>
+  <li>Place marker in Gazebo at search area</li>
+  <li>Mission FSM with timeouts in DETECT</li>
+  <li>Log to <code>/mission/status</code></li>
+  <li>End-to-end test 3×; document failure modes</li>
+</ol>
+
+<h3>Common mistakes</h3>
+<ul>
+  <li>Blocking node in a tight loop (use timers / async callbacks)</li>
+  <li>No timeout in DETECT</li>
+  <li>Changing too many Nav2 YAML params at once</li>
+</ul>
+
+<h3>Optional challenges</h3>
+<ul>
+  <li>Build own map with SLAM; run full mission</li>
+  <li>Navigate closer using estimated object pose</li>
+  <li>Rosbag replay for perception debugging</li>
+</ul>
+
+<hr>
+
+<h2 id="complete">12. Definition of “Project Complete”</h2>
+<ol>
+  <li><strong>Localization:</strong> AMCL on 2D map; laser aligns with map in RViz.</li>
+  <li><strong>Navigation:</strong> Given target pose, Nav2 drives there reliably.</li>
+  <li><strong>Mission:</strong> Search → detect → report on topic → home.</li>
+  <li><strong>Understanding:</strong> System graph + explain each layer without notes.</li>
+  <li><strong>Mapping (stretch):</strong> You built and saved the map yourself.</li>
+</ol>
+
+<h3>Checkpoint rubric</h3>
+<table>
+  <tr><th>Score</th><th>Meaning</th></tr>
+  <tr><td>Green</td><td>Deliverables done + reflection questions answered</td></tr>
+  <tr><td>Yellow</td><td>Partial; carry one item forward, no new scope</td></tr>
+  <tr><td>Red</td><td>Stuck &gt;2 sessions → simplify (e.g. default map, stub detection)</td></tr>
+</table>
+
+<h3>If only ~80 hours</h3>
+<ol>
+  <li>Week 0 + Week 1 (full)</li>
+  <li>Week 2 Path A (existing map + TF)</li>
+  <li>Week 3 (full) — non-negotiable</li>
+  <li>Week 4 minimal: manual <code>target_found</code> + return home, then real camera</li>
+</ol>
+
+<hr>
+
+<h2 id="risks">13. Risks &amp; Mitigations</h2>
+<table>
+  <tr><th>Risk</th><th>Mitigation</th></tr>
+  <tr><td>WSL graphics issues</td><td>Week 0 gate; WSLg on Win 11; dual-boot fallback</td></tr>
+  <tr><td>Nav2 config complexity</td><td>Stock TurtleBot 3 nav launch unmodified first</td></tr>
+  <tr><td>Week 3 eats Week 4</td><td>Pre-define poses; stub DETECT with manual topic</td></tr>
+  <tr><td>Perception unreliable</td><td>ArUco only; DETECT timeout; save failure images</td></tr>
+  <tr><td>Scope creep (tap object)</td><td>Out of scope; report topic = success</td></tr>
+</table>
+
+<hr>
+
+<h2 id="resources">14. Resources (official-first)</h2>
+<table>
+  <tr><th>Topic</th><th>Link</th></tr>
+  <tr><td>ROS 2 Humble install</td><td>https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html</td></tr>
+  <tr><td>ROS 2 tutorials</td><td>https://docs.ros.org/en/humble/Tutorials.html</td></tr>
+  <tr><td>TF2 tutorials</td><td>https://docs.ros.org/en/humble/Tutorials/Intermediate/Tf2/Tf2-Main.html</td></tr>
+  <tr><td>TurtleBot 3 e-manual</td><td>https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/</td></tr>
+  <tr><td>Nav2</td><td>https://navigation.ros.org/</td></tr>
+  <tr><td>SLAM Toolbox</td><td>https://github.com/SteveMacenski/slam_toolbox</td></tr>
+  <tr><td>ROS 2 Actions (Python)</td><td>https://docs.ros.org/en/humble/Tutorials/Intermediate/Writing-an-Action-Server-Client/Py.html</td></tr>
+</table>
+
+<hr>
+
+<h2 id="journal">15. Daily Journal Template</h2>
+<p>Save in <code>docs/system_graph.md</code> (~10 min/day):</p>
+<pre>
+Date:
+Running launch files:
+Nodes (list):
+Topics I care about:
+TF chain:
+What I changed today:
+What broke:
+One sentence: what does the system do now?
+</pre>
+
+<hr>
+<p class="meta"><em>Document generated for ROS robot learning project — Find, Report, Return. Platform: TurtleBot 3, ROS 2 Humble, Gazebo, WSL 2 Ubuntu 22.04.</em></p>
+
+</body>
+</html>
