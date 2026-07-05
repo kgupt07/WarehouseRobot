@@ -43,7 +43,7 @@ Subscribed topics:
  * /tf_static [tf2_msgs/msg/TFMessage] 1 subscriber
 
 
-
+[eventually:
 teleop_twist_keyboard
   publishes → /cmd_vel
   subscribed by → (fill from ros2 topic info)
@@ -51,6 +51,7 @@ teleop_twist_keyboard
 gazebo / robot_state_publisher / etc.
   publishes → /scan
   publishes → /odom
+  ]
 
 ## Notes
 - When teleop is not running, /cmd_vel has no publisher.
