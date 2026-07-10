@@ -24,6 +24,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'nav_mission = mission_robot.nav_mission:main',
         ],
     },
 )
+
+
